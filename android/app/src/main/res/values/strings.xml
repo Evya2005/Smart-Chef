@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Replace YOUR_APP_ID with the numeric Facebook App ID from Meta Developer Console -->
+    <!-- Replace YOUR_CLIENT_TOKEN from App Settings > Advanced > Client Token -->
+    <string name="app_name">שף חכם</string>
+    <string name="facebook_app_id">1291920539450008</string>
+    <string name="fb_login_protocol_scheme">fb1291920539450008</string>
+    <string name="facebook_client_token">51965afbcba30637f7e15d549ecbbe6c</string>
+</resources>

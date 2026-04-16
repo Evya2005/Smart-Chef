@@ -1,0 +1,91 @@
+name: smart_chef
+description: Smart Chef — AI-powered recipe manager.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management — using 3.x for Dart 3.11 compatibility
+  flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^4.0.0
+
+  # Firebase
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.0
+  cloud_firestore: ^6.0.0
+  firebase_ai: ^3.9.0
+
+  # Routing
+  go_router: ^14.2.7
+
+  # File handling
+  file_picker: ^8.0.6
+  image_picker: ^1.1.2
+
+  # Networking
+  http: ^1.2.2
+  html: ^0.15.4
+  flutter_facebook_auth: ^7.0.1
+
+  # PDF
+  syncfusion_flutter_pdf: ^32.2.8
+
+  # Models
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # AI — direct Gemini access with user-provided API key
+  google_generative_ai: ^0.4.6
+
+  # Utilities
+  uuid: ^4.4.2
+  intl: ^0.20.0
+  cached_network_image: ^3.3.1
+  gap: ^3.0.1
+  share_plus: ^10.0.0
+  receive_sharing_intent: ^1.8.1
+  flutter_local_notifications: ^18.0.0
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generation
+  build_runner: ^2.4.11
+  freezed: ^3.0.0
+  json_serializable: ^6.8.0
+  riverpod_generator: ^4.0.0
+
+  # Testing
+  fake_cloud_firestore: ^4.0.0
+  mockito: ^5.4.4
+
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  # Android adaptive icon (API 26+): logo on green background
+  android: true
+  ios: true
+  image_path: "logo2_padded.png"
+  adaptive_icon_background: "#2E7D32"
+  adaptive_icon_foreground: "logo2_padded.png"
+  # Solid green background for older Android + iOS
+  background_color: "#2E7D32"
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+
+flutter:
+  uses-material-design: true

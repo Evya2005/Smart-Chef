@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dart analyze:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(wc:*)",
+      "Bash(dart run build_runner build:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(./gradlew:*)",
+      "Bash(flutter run:*)",
+      "Bash(xargs:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter test:*)",
+      "Bash(dir:*)",
+      "WebFetch(domain:pub.dev)",
+      "WebSearch",
+      "Bash(firebase deploy:*)",
+      "Bash(cat:*)",
+      "Bash(flutter build:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}
