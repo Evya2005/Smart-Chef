@@ -1,0 +1,83 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# Build outputs
+build/
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Code generation artifacts
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.fleet/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Firebase / Google services
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+.firebaserc
+
+# Environment / secrets
+.env
+.env.*
+secrets.dart
+**/secrets/
+api_keys.dart
+
+# Logs
+*.log
+logs/
+
+# Dart analysis
+.dartServer/
+
+# Android signing
+*.jks
+*.keystore
+key.properties
+
+# iOS CocoaPods
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Flutter web (not used, but just in case)
+web/flutter_service_worker.js
+web/version.json
+
+# Codemagic CI cache
+.codemagic/
+
+# Crashlytics / Sentry
+crashlytics-build.properties
