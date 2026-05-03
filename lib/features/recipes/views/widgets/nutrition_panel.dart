@@ -26,9 +26,7 @@ class _NutritionPanelState extends ConsumerState<NutritionPanel> {
 
     final nutrition = recipe.nutrition!;
     final servingCount = ref.watch(servingCountProvider(widget.recipeId));
-    final scale = recipe.defaultServings > 0
-        ? servingCount / recipe.defaultServings
-        : 1.0;
+    final scale = servingCount.toDouble();
 
     return _NutritionCard(
       nutrition: nutrition,

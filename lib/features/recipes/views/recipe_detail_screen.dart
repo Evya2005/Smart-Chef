@@ -427,10 +427,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                       .currentUser
                                       ?.uid;
                                   if (uid != null) {
+                                    final newRating = starNum == recipe.rating ? 0 : starNum;
                                     ref
                                         .read(recipeRepositoryProvider)
                                         .setRating(
-                                            uid, recipeId, starNum);
+                                            uid, recipeId, newRating);
                                   }
                                 },
                                 child: Padding(
