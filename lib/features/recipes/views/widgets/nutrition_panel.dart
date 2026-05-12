@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../models/nutrition_model.dart';
 import '../../providers/recipe_detail_provider.dart';
 import '../../providers/scaling_provider.dart';
@@ -113,15 +114,15 @@ class _NutritionCard extends StatelessWidget {
                     children: [
                       Flexible(
                         flex: (proteinG * 100).round(),
-                        child: ColoredBox(color: Colors.blue.shade400),
+                        child: ColoredBox(color: AppColors.nutritionProtein),
                       ),
                       Flexible(
                         flex: (fatG * 100).round(),
-                        child: ColoredBox(color: Colors.orange.shade400),
+                        child: ColoredBox(color: AppColors.nutritionFat),
                       ),
                       Flexible(
                         flex: (carbsG * 100).round(),
-                        child: ColoredBox(color: Colors.green.shade400),
+                        child: ColoredBox(color: AppColors.nutritionCarbs),
                       ),
                     ],
                   ),
@@ -140,21 +141,21 @@ class _NutritionCard extends StatelessWidget {
               label: 'חלבון',
               value: proteinG,
               unit: 'ג׳',
-              barColor: Colors.blue.shade400,
+              barColor: AppColors.nutritionProtein,
               fraction: total > 0 ? proteinG / total : 0,
             ),
             _NutrientRow(
               label: 'שומן',
               value: fatG,
               unit: 'ג׳',
-              barColor: Colors.orange.shade400,
+              barColor: AppColors.nutritionFat,
               fraction: total > 0 ? fatG / total : 0,
             ),
             _NutrientRow(
               label: 'פחמימות',
               value: carbsG,
               unit: 'ג׳',
-              barColor: Colors.green.shade400,
+              barColor: AppColors.nutritionCarbs,
               fraction: total > 0 ? carbsG / total : 0,
             ),
             // Expandable secondary rows

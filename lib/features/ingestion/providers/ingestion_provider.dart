@@ -8,6 +8,7 @@ import '../../recipes/models/recipe_model.dart';
 import '../../recipes/repositories/recipe_repository.dart';
 import '../../recipes/services/cloudinary_service.dart';
 import '../../settings/providers/user_settings_provider.dart';
+import '../../../core/errors/app_exception.dart';
 import '../services/apify_service.dart';
 import '../services/gemini_service.dart';
 import '../services/pdf_processor_service.dart';
@@ -175,6 +176,32 @@ class IngestionNotifier extends _$IngestionNotifier {
       state = IngestionPreview(recipe.copyWith(sourceType: 'social'));
     } catch (e) {
       state = IngestionError(e.toString());
+    }
+  }
+
+  Future<void> generateFromIngredients(List<String> ingredients) async {
+    final apiKey = ref.read(geminiApiKeyProvider).asData?.value ?? '';
+    state = const IngestionLoading('יוצר מתכון עם AI...');
+    try {
+      final service = GeminiService(apiKey: apiKey);
+      var recipe = await service.generateFromIngredients(ingredients);
+      state = const IngestionLoading('מייצר תמונה למתכון...');
+      try {
+        final imgBytes = await service.generateRecipeImage(
+            recipe.title, recipe.ingredients.map((i) => i.name).toList());
+        if (imgBytes != null) {
+          final url =
+              await _cloudinary.uploadImageBytes(imgBytes, 'image/jpeg');
+          recipe = recipe.copyWith(imageUrl: url);
+        }
+      } catch (_) {
+        // Non-fatal — continue without image.
+      }
+      state = IngestionPreview(recipe.copyWith(sourceType: 'ai-generated'));
+    } on AppException catch (e) {
+      state = IngestionError(e.message);
+    } catch (e) {
+      state = IngestionError('שגיאה ביצירת מתכון: $e');
     }
   }
 

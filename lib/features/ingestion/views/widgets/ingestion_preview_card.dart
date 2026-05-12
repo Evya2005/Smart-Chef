@@ -75,7 +75,12 @@ class _IngestionPreviewCardState extends State<IngestionPreviewCard> {
               children: kAllTags.map((tag) {
                 final selected = _selectedTags.contains(tag);
                 return FilterChip(
-                  label: Text(tagLabel(tag)),
+                  label: Text(
+                    tagLabel(tag),
+                    style: TextStyle(
+                      color: selected ? Colors.white : null,
+                    ),
+                  ),
                   selected: selected,
                   onSelected: (_) {
                     setState(() {

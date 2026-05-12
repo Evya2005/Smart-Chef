@@ -191,8 +191,7 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> {
               else
                 TextButton(
                   onPressed: () => _save(recipe),
-                  child: const Text('שמור',
-                      style: TextStyle(color: Colors.white)),
+                  child: const Text('שמור'),
                 ),
             ],
           ),
@@ -272,7 +271,12 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> {
                   children: kAllTags.map((tag) {
                     final selected = _selectedTags.contains(tag);
                     return FilterChip(
-                      label: Text(tagLabel(tag)),
+                      label: Text(
+                        tagLabel(tag),
+                        style: TextStyle(
+                          color: selected ? Colors.white : null,
+                        ),
+                      ),
                       selected: selected,
                       onSelected: (_) => setState(() {
                         if (selected) {
@@ -319,7 +323,12 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> {
                   children: dynamicCategories.map((cat) {
                     final selected = _selectedCategory == cat;
                     return FilterChip(
-                      label: Text(cat),
+                      label: Text(
+                        cat,
+                        style: TextStyle(
+                          color: selected ? Colors.white : null,
+                        ),
+                      ),
                       selected: selected,
                       onSelected: (_) => setState(() {
                         _selectedCategory = cat;
@@ -439,7 +448,7 @@ class _ImagePickerSection extends StatelessWidget {
                 icon: const Icon(Icons.delete_outline, size: 18),
                 label: const Text('הסר'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
+                  foregroundColor: Theme.of(context).colorScheme.error,
                 ),
               ),
             ],

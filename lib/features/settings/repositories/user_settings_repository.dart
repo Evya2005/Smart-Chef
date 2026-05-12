@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -36,4 +38,34 @@ class UserSettingsRepository {
 
   Future<void> clearApifyApiKey(String uid) =>
       _userDoc(uid).update({'apifyApiKey': FieldValue.delete()});
+
+  Future<String?> fetchOwnerEmail(String userId) async {
+    // 1. Check user_profiles — written on each login
+    final profileDoc = await _firestore
+        .collection(FirestoreConstants.userProfilesCollection)
+        .doc(userId)
+        .get();
+    final profileEmail = profileDoc.data()?['email'] as String?;
+    if (profileEmail != null) return profileEmail;
+
+    // 2. Fallback: scan public_recipes for a doc from this user that has ownerEmail
+    final snap = await _firestore
+        .collection(FirestoreConstants.publicRecipesCollection)
+        .where('userId', isEqualTo: userId)
+        .limit(20)
+        .get();
+    for (final doc in snap.docs) {
+      final email = doc.data()['ownerEmail'] as String?;
+      if (email != null) {
+        // Cache it in user_profiles so future lookups skip this query.
+        unawaited(_firestore
+            .collection(FirestoreConstants.userProfilesCollection)
+            .doc(userId)
+            .set({'email': email}, SetOptions(merge: true)));
+        return email;
+      }
+    }
+
+    return null;
+  }
 }

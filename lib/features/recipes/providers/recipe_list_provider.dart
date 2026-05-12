@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../auth/providers/admin_provider.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../models/recipe_model.dart';
 import '../repositories/recipe_repository.dart';
@@ -21,4 +22,10 @@ Stream<List<RecipeModel>> publicRecipes(Ref ref) {
       .watch(recipeRepositoryProvider)
       .watchPublicRecipes()
       .map((recipes) => recipes.where((r) => r.userId != user.uid).toList());
+}
+
+@riverpod
+Stream<List<RecipeModel>> allRecipesAdmin(Ref ref) {
+  if (!ref.watch(isAdminProvider)) return const Stream.empty();
+  return ref.watch(recipeRepositoryProvider).watchAllRecipesAdmin();
 }

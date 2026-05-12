@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../../../core/theme/app_colors.dart';
 
 class CookTimerDisplay extends StatelessWidget {
   const CookTimerDisplay({super.key, required this.seconds});
@@ -13,20 +16,22 @@ class CookTimerDisplay extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.amber,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.terracottaSoft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.terracotta.withAlpha(60)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.timer, color: Colors.black87),
-          const Gap(8),
+          const Icon(Icons.timer_outlined, color: AppColors.terracotta),
+          const Gap(10),
           Text(
             '${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}',
-            style: const TextStyle(
+            style: GoogleFonts.sourceSerif4(
               fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+              color: AppColors.terracotta,
+              letterSpacing: -0.5,
             ),
           ),
         ],

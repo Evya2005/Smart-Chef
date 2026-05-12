@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/models/ingredient_model.dart';
 import '../../../../shared/models/unit_type.dart';
 import '../../providers/ingredient_display_unit_provider.dart';
@@ -68,66 +69,94 @@ class IngredientTile extends ConsumerWidget {
         '${isApprox ? '~' : ''}${_formatQty(displayQty)}$unitLabel';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          GestureDetector(
-            onTap: canInteract
-                ? () => _showConversionSheet(context, ref)
-                : null,
-            child: Container(
-              width: 80,
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-              decoration: canInteract
-                  ? BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withAlpha(80),
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    )
-                  : null,
-              child: Text(
-                quantityStr,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          // Swap / substitute button
+          if (showSubstituteButton && canInteract)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 10),
+              child: GestureDetector(
+                onTap: onSubstitute,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.lineStrong),
+                  ),
+                  child: const Icon(
+                    Icons.swap_horiz_outlined,
+                    size: 16,
+                    color: AppColors.ink2,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
+          // Ingredient name + prep note
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  ingredient.inferred
-                      ? '${ingredient.name} *'
-                      : ingredient.name,
-                  style: textTheme.bodyMedium,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      ingredient.name,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (ingredient.inferred) ...[
+                      const SizedBox(width: 3),
+                      Text(
+                        '*',
+                        style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.terracotta),
+                      ),
+                    ],
+                  ],
                 ),
                 if (ingredient.prepNote != null)
                   Text(
                     ingredient.prepNote!,
                     style: textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                      color: AppColors.ink3,
                     ),
                   ),
               ],
             ),
           ),
-          if (showSubstituteButton && canInteract)
-            IconButton(
-              icon: const Icon(Icons.swap_horiz_outlined, size: 20),
-              tooltip: 'מצא תחליף',
-              onPressed: onSubstitute,
-              visualDensity: VisualDensity.compact,
+          const SizedBox(width: 12),
+          // Quantity pill — terracotta accent
+          GestureDetector(
+            onTap: canInteract
+                ? () => _showConversionSheet(context, ref)
+                : null,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+              decoration: BoxDecoration(
+                color: AppColors.terracottaSoft,
+                borderRadius: BorderRadius.circular(8),
+                border: canInteract
+                    ? Border.all(
+                        color: AppColors.terracotta.withAlpha(60))
+                    : null,
+              ),
+              child: Text(
+                quantityStr,
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.terracotta,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
+          ),
         ],
       ),
     );

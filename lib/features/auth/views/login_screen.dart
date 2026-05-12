@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/logger.dart';
@@ -97,30 +98,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.cream,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Gap(40),
-              const Icon(Icons.restaurant_menu,
-                  size: 80, color: Colors.white),
-              const Gap(16),
+              const Gap(48),
+              // Logo badge
+              Center(
+                child: Container(
+                  width: 88,
+                  height: 88,
+                  decoration: const BoxDecoration(
+                    color: AppColors.terracotta,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.restaurant_menu,
+                    size: 44,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const Gap(20),
               Text(
                 'Smart Chef',
-                style: textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.sourceSerif4(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.ink,
+                  letterSpacing: -0.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const Gap(8),
               Text(
                 'הפוך כל מתכון לחלק מספר הבישול האישי שלך',
-                style:
-                    textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                style: GoogleFonts.assistant(
+                  fontSize: 15,
+                  color: AppColors.ink2,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
               const Gap(40),
@@ -146,15 +166,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade50,
+                              color: Theme.of(context).colorScheme.errorContainer,
                               borderRadius: BorderRadius.circular(8),
-                              border:
-                                  Border.all(color: Colors.red.shade200),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.error.withAlpha(80),
+                              ),
                             ),
                             child: Text(
                               _errorMessage!,
-                              style:
-                                  TextStyle(color: Colors.red.shade700),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onErrorContainer,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),

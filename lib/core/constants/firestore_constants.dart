@@ -8,6 +8,7 @@ class FirestoreConstants {
   static const String versionsCollection = 'versions';
   static const String cookingSessionsCollection = 'cooking_sessions';
   static const String publicRecipesCollection = 'public_recipes';
+  static const String userProfilesCollection = 'user_profiles';
   static const String appConfigCollection = 'app_config';
   static const String categoriesDocument = 'categories';
 }

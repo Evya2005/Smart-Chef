@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../features/recipes/models/recipe_model.dart';
 
 /// A compact row showing a recipe's progress in Mission Control.
@@ -54,7 +55,7 @@ class RecipeTrackTile extends StatelessWidget {
               height: 12,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isCompleted ? Colors.grey : color,
+                color: isCompleted ? AppColors.ink3 : color,
               ),
             ),
             const SizedBox(width: 12),
@@ -83,7 +84,7 @@ class RecipeTrackTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       if (isCompleted)
-                        const Icon(Icons.check_circle, size: 16, color: Colors.green)
+                        const Icon(Icons.check_circle, size: 16, color: AppColors.sage)
                       else if (hasRunningTimer)
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -112,7 +113,7 @@ class RecipeTrackTile extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: isCompleted ? 1.0 : progress,
                       minHeight: 6,
-                      color: isCompleted ? Colors.green : color,
+                      color: isCompleted ? AppColors.sage : color,
                       backgroundColor: color.withAlpha(40),
                     ),
                   ),

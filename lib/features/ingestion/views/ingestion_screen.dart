@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/share_intent_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/ai_guard.dart';
 import '../../../features/settings/providers/user_settings_provider.dart';
 import '../../../shared/widgets/error_card.dart';
@@ -25,17 +27,16 @@ class IngestionScreen extends ConsumerStatefulWidget {
 }
 
 class _IngestionScreenState extends ConsumerState<IngestionScreen> {
-  InputSource _source = InputSource.text;
+  InputSource _source = InputSource.url;
   final _textCtrl = TextEditingController();
   final _urlCtrl = TextEditingController();
-
-  // Picked images for the image source.
   final List<Uint8List> _images = [];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _handleSharedIntent());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _handleSharedIntent());
   }
 
   @override
@@ -82,8 +83,6 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
   String? _extractUrl(String text) =>
       RegExp(r'https?://[^\s]+').firstMatch(text)?.group(0);
 
-  // ─── Image helpers ─────────────────────────────────────────────────────────
-
   Future<void> _pickFromGallery() async {
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage(imageQuality: 85);
@@ -94,16 +93,14 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
 
   Future<void> _pickFromCamera() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-        source: ImageSource.camera, imageQuality: 85);
+    final picked =
+        await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
     if (picked == null) return;
     final bytes = await picked.readAsBytes();
     setState(() => _images.add(bytes));
   }
 
   void _removeImage(int index) => setState(() => _images.removeAt(index));
-
-  // ─── Parse dispatch ────────────────────────────────────────────────────────
 
   Future<void> _parse() async {
     if (!await requireAiKey(context, ref)) return;
@@ -134,8 +131,6 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
         await notifier.parsePdf(result.files.single.bytes!);
 
       case InputSource.url:
-        // Extract the first http(s) URL from whatever was pasted — handles
-        // copy artifacts like "url=https://..." or leading garbage text.
         final rawUrl = _extractUrl(_urlCtrl.text.trim());
         if (rawUrl == null) {
           _showSnack('יש להזין קישור תחילה.');
@@ -170,8 +165,6 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
     await ref.read(ingestionProvider.notifier).parseSocialWithApify(url);
   }
 
-  // ─── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final ingestionState = ref.watch(ingestionProvider);
@@ -183,64 +176,235 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
       }
     });
 
+    final isIdle = ingestionState is IngestionIdle;
+    final isError = ingestionState is IngestionError;
+    final isPreview = ingestionState is IngestionPreview;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('הוסף מתכון')),
+      backgroundColor: AppColors.cream,
       body: Stack(
         children: [
-          ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              InputSourcePicker(
-                selected: _source,
-                onChanged: (s) {
-                  setState(() {
-                    _source = s;
-                    _images.clear();
-                  });
-                  ref.read(ingestionProvider.notifier).reset();
-                },
-              ),
-              const Gap(20),
-              _buildInputArea(),
-              const Gap(16),
-              if (ingestionState is IngestionIdle ||
-                  ingestionState is IngestionError)
-                FilledButton.icon(
-                  onPressed: _parse,
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('נתח עם AI'),
+          SafeArea(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // ── Top bar ──────────────────────────────────────────
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                            border:
+                                Border.all(color: AppColors.line),
+                          ),
+                          child: const Icon(Icons.close,
+                              size: 18, color: AppColors.ink),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'מתכון חדש',
+                            style: GoogleFonts.assistant(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.ink2,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 40),
+                    ],
+                  ),
                 ),
-              if (ingestionState is IngestionError) ...[
+
+                // ── Hero section ──────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title + AI badge on the same row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'איך נוסיף את\nהמתכון?',
+                              style: GoogleFonts.sourceSerif4(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.ink,
+                                height: 1.1,
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                          ),
+                          const Gap(12),
+                          // AI badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 11, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.terracottaSoft,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.auto_awesome,
+                                    size: 12, color: AppColors.terracotta),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'AI מזהה מתכון אוטומטית',
+                                  style: GoogleFonts.assistant(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                    color: AppColors.terracotta,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Gap(6),
+                      Text(
+                        'צלם תמונה של דף ספר, הדבק קישור או טקסט — נחלץ הכל בעצמנו.',
+                        style: GoogleFonts.assistant(
+                          fontSize: 15,
+                          color: AppColors.ink2,
+                          height: 1.55,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Source grid (2×2) ────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.35,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _SourceCard(
+                        id: InputSource.url,
+                        label: 'קישור',
+                        sub: 'אתר, רשת חברתית',
+                        icon: Icons.link,
+                        selected: _source == InputSource.url,
+                        onTap: () => _selectSource(InputSource.url),
+                      ),
+                      _SourceCard(
+                        id: InputSource.image,
+                        label: 'תמונה',
+                        sub: 'מצלמה או גלריה',
+                        icon: Icons.camera_alt_outlined,
+                        selected: _source == InputSource.image,
+                        onTap: () => _selectSource(InputSource.image),
+                      ),
+                      _SourceCard(
+                        id: InputSource.pdf,
+                        label: 'PDF',
+                        sub: 'ספר בישול סרוק',
+                        icon: Icons.picture_as_pdf_outlined,
+                        selected: _source == InputSource.pdf,
+                        onTap: () => _selectSource(InputSource.pdf),
+                      ),
+                      _SourceCard(
+                        id: InputSource.text,
+                        label: 'טקסט',
+                        sub: 'הדבק מתכון',
+                        icon: Icons.text_snippet_outlined,
+                        selected: _source == InputSource.text,
+                        onTap: () => _selectSource(InputSource.text),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Generate from ingredients banner ─────────────────
                 const Gap(12),
-                ErrorCard(
-                  message: ingestionState.message,
-                  onRetry: _parse,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _GenerateBannerCard(),
                 ),
-              ],
-              if (ingestionState is IngestionPreview) ...[
-                const Gap(20),
-                IngestionPreviewCard(
-                  recipe: ingestionState.recipe,
-                  onTitleChanged: (title) {
-                    ref
-                        .read(ingestionProvider.notifier)
-                        .updatePreview(ingestionState.recipe
-                            .copyWith(title: title));
-                  },
-                  onTagsChanged: (tags) {
-                    ref
-                        .read(ingestionProvider.notifier)
-                        .updatePreview(ingestionState.recipe
-                            .copyWith(tags: tags));
-                  },
-                  onConfirm: () =>
-                      ref.read(ingestionProvider.notifier).confirmSave(),
-                  onDiscard: () =>
-                      ref.read(ingestionProvider.notifier).reset(),
+
+                // ── Input area ────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                  child: _buildInputArea(),
                 ),
+
+                // ── Error ─────────────────────────────────────────────
+                if (isError) ...[
+                  const Gap(12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ErrorCard(
+                      message: ingestionState.message,
+                      onRetry: _parse,
+                    ),
+                  ),
+                ],
+
+                // ── Preview card ──────────────────────────────────────
+                if (isPreview) ...[
+                  const Gap(20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: IngestionPreviewCard(
+                      recipe: ingestionState.recipe,
+                      onTitleChanged: (title) => ref
+                          .read(ingestionProvider.notifier)
+                          .updatePreview(ingestionState.recipe
+                              .copyWith(title: title)),
+                      onTagsChanged: (tags) => ref
+                          .read(ingestionProvider.notifier)
+                          .updatePreview(ingestionState.recipe
+                              .copyWith(tags: tags)),
+                      onConfirm: () =>
+                          ref.read(ingestionProvider.notifier).confirmSave(),
+                      onDiscard: () =>
+                          ref.read(ingestionProvider.notifier).reset(),
+                    ),
+                  ),
+                ],
+
+                // ── CTA ───────────────────────────────────────────────
+                if (isIdle || isError)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
+                    child: FilledButton.icon(
+                      onPressed: _parse,
+                      icon: const Icon(Icons.auto_awesome, size: 18),
+                      label: const Text('חלץ מתכון'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const Gap(40),
               ],
-              const Gap(40),
-            ],
+            ),
           ),
           if (ingestionState is IngestionLoading)
             LoadingOverlay(message: ingestionState.message),
@@ -251,56 +415,74 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
     );
   }
 
+  void _selectSource(InputSource source) {
+    setState(() {
+      _source = source;
+      if (source != InputSource.image) _images.clear();
+    });
+    ref.read(ingestionProvider.notifier).reset();
+  }
+
   Widget _buildInputArea() {
     switch (_source) {
-      case InputSource.text:
-        return TextField(
-          controller: _textCtrl,
-          maxLines: 10,
-          decoration: const InputDecoration(
-            labelText: 'הדבק כאן טקסט מתכון',
-            alignLabelWithHint: true,
-          ),
-        );
-
       case InputSource.url:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Text(
+              'הדבק קישור',
+              style: GoogleFonts.assistant(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.ink2,
+              ),
+            ),
+            const Gap(8),
             TextField(
               controller: _urlCtrl,
               keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                labelText: 'קישור למתכון',
-                hintText: 'https://example.com/recipe',
-                prefixIcon: Icon(Icons.link),
+              textDirection: TextDirection.ltr,
+              decoration: InputDecoration(
+                hintText: 'https://recipe.com/...',
+                prefixIcon:
+                    const Icon(Icons.link, color: AppColors.ink2),
+                hintStyle: GoogleFonts.assistant(
+                  color: AppColors.ink3,
+                  fontSize: 14,
+                ),
               ),
             ),
-            if (ref.watch(hasApifyApiKeyProvider))
-              Padding(
-                padding: const EdgeInsets.only(top: 8, right: 4),
-                child: Text(
-                  'פוסטים ציבוריים מפייסבוק/אינסטגרם נתמכים',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.green,
+            const Gap(8),
+            ref.watch(hasApifyApiKeyProvider)
+                ? Text(
+                    'פוסטים ציבוריים מפייסבוק/אינסטגרם נתמכים',
+                    style: GoogleFonts.assistant(
+                      fontSize: 12,
+                      color: AppColors.sage,
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () => context.push('/settings'),
+                    child: Text(
+                      'פוסטים מפייסבוק/אינסטגרם דורשים מפתח Apify ← הגדרות',
+                      style: GoogleFonts.assistant(
+                        fontSize: 12,
+                        color: AppColors.terracotta,
+                        decoration: TextDecoration.underline,
                       ),
-                ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.only(top: 8, right: 4),
-                child: GestureDetector(
-                  onTap: () => context.push('/settings'),
-                  child: Text(
-                    'פוסטים מפייסבוק/אינסטגרם דורשים מפתח Apify ← הגדרות',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          decoration: TextDecoration.underline,
-                        ),
+                    ),
                   ),
-                ),
-              ),
           ],
+        );
+
+      case InputSource.text:
+        return TextField(
+          controller: _textCtrl,
+          maxLines: 8,
+          decoration: InputDecoration(
+            labelText: 'הדבק כאן טקסט מתכון',
+            alignLabelWithHint: true,
+          ),
         );
 
       case InputSource.image:
@@ -318,6 +500,87 @@ class _IngestionScreenState extends ConsumerState<IngestionScreen> {
           onTap: _parse,
         );
     }
+  }
+}
+
+// ─── Source card ──────────────────────────────────────────────────────────────
+
+class _SourceCard extends StatelessWidget {
+  const _SourceCard({
+    required this.id,
+    required this.label,
+    required this.sub,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final InputSource id;
+  final String label;
+  final String sub;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.ink : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border:
+              selected ? null : Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: selected
+                    ? Colors.white.withAlpha(25)
+                    : AppColors.sand,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: selected ? Colors.white : AppColors.ink,
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.sourceSerif4(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: selected ? Colors.white : AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  sub,
+                  style: GoogleFonts.assistant(
+                    fontSize: 12,
+                    color: selected
+                        ? Colors.white.withAlpha(153)
+                        : AppColors.ink3,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -341,7 +604,6 @@ class _ImagePickerArea extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Add buttons.
         Row(
           children: [
             Expanded(
@@ -365,7 +627,8 @@ class _ImagePickerArea extends StatelessWidget {
           const Gap(12),
           Text(
             '${images.length} ${images.length == 1 ? 'תמונה נבחרה' : 'תמונות נבחרו'}',
-            style: Theme.of(context).textTheme.labelMedium,
+            style: GoogleFonts.assistant(
+                fontSize: 13, color: AppColors.ink2),
           ),
           const Gap(8),
           SizedBox(
@@ -387,16 +650,15 @@ class _ImagePickerArea extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               border: Border.all(
-                  color: Theme.of(context).colorScheme.outline,
+                  color: AppColors.lineStrong,
                   width: 1.5,
                   style: BorderStyle.solid),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
               'לא נבחרו תמונות',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              style: GoogleFonts.assistant(
+                  fontSize: 14, color: AppColors.ink3),
             ),
           ),
         ],
@@ -417,12 +679,8 @@ class _ImageThumb extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.memory(
-            bytes,
-            width: 100,
-            height: 110,
-            fit: BoxFit.cover,
-          ),
+          child: Image.memory(bytes,
+              width: 100, height: 110, fit: BoxFit.cover),
         ),
         Positioned(
           top: 2,
@@ -443,8 +701,6 @@ class _ImageThumb extends StatelessWidget {
   }
 }
 
-// ─── Generic picker button (PDF) ──────────────────────────────────────────────
-
 class _PickerButton extends StatelessWidget {
   const _PickerButton({
     required this.icon,
@@ -460,23 +716,85 @@ class _PickerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         height: 120,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border.all(
-              color: Theme.of(context).colorScheme.outline, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.lineStrong, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 40,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(icon, size: 40, color: AppColors.terracotta),
             const Gap(8),
-            Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            Text(label,
+                style: GoogleFonts.assistant(
+                    fontSize: 14, color: AppColors.ink)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Generate banner card ──────────────────────────────────────────────────────
+
+class _GenerateBannerCard extends StatelessWidget {
+  const _GenerateBannerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/generate-recipe'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 68,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.terracotta.withAlpha(77)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.terracottaSoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.auto_awesome,
+                  size: 18, color: AppColors.terracotta),
+            ),
+            const Gap(14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'צור מתכון מרכיבים',
+                    style: GoogleFonts.sourceSerif4(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  Text(
+                    'AI יבנה מתכון בשבילך',
+                    style: GoogleFonts.assistant(
+                      fontSize: 12,
+                      color: AppColors.ink3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                size: 20, color: AppColors.ink3),
           ],
         ),
       ),

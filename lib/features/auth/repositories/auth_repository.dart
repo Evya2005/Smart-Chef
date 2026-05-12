@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/constants/firestore_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/logger.dart';
 
@@ -11,11 +13,27 @@ part 'auth_repository.g.dart';
 AuthRepository authRepository(Ref ref) => AuthRepository();
 
 class AuthRepository {
-  AuthRepository() : _auth = FirebaseAuth.instance;
+  AuthRepository()
+      : _auth = FirebaseAuth.instance,
+        _firestore = FirebaseFirestore.instance;
 
   final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  Future<void> _saveUserProfile(User user) async {
+    if (user.email == null) return;
+    await _firestore
+        .collection(FirestoreConstants.userProfilesCollection)
+        .doc(user.uid)
+        .set({'email': user.email}, SetOptions(merge: true));
+  }
+
+  Stream<User?> get authStateChanges => _auth.authStateChanges().asyncMap(
+        (user) async {
+          if (user != null) await _saveUserProfile(user);
+          return user;
+        },
+      );
 
   User? get currentUser => _auth.currentUser;
 
@@ -26,6 +44,7 @@ class AuthRepository {
         password: password,
       );
       AppLogger.i('Signed in: ${credential.user?.email}');
+      await _saveUserProfile(credential.user!);
       return credential.user!;
     } on FirebaseAuthException catch (e, st) {
       AppLogger.e('FirebaseAuthException', e, st);
@@ -44,6 +63,7 @@ class AuthRepository {
         password: password,
       );
       AppLogger.i('Registered: ${credential.user?.email}');
+      await _saveUserProfile(credential.user!);
       return credential.user!;
     } on FirebaseAuthException catch (e, st) {
       AppLogger.e('FirebaseAuthException', e, st);
@@ -76,6 +96,7 @@ class AuthRepository {
       );
       final userCredential = await _auth.signInWithCredential(credential);
       AppLogger.i('Signed in via Facebook: ${userCredential.user?.email}');
+      await _saveUserProfile(userCredential.user!);
       return userCredential.user!;
     } on FirebaseAuthException catch (e, st) {
       AppLogger.e('Facebook FirebaseAuthException', e, st);

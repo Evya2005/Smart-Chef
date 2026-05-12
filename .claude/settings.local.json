@@ -20,7 +20,12 @@
       "Bash(flutter build:*)",
       "Bash(find:*)",
       "Bash(curl:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(python3:*)",
+      "Bash(dart run:*)",
+      "Bash(ls:*)",
+      "Bash(firebase:*)",
+      "PowerShell(git add *)"
     ]
   }
 }

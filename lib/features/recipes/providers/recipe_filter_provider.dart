@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../auth/providers/admin_provider.dart';
 import '../models/recipe_model.dart';
 import 'recipe_list_provider.dart';
 
@@ -84,6 +85,7 @@ class RecipeFilter {
     this.minRating,
     this.activeCategory,
     this.nutritionPresets = const {},
+    this.showPublicRecipes = true,
   });
 
   final String query;
@@ -94,6 +96,7 @@ class RecipeFilter {
   final int? minRating;
   final String? activeCategory;
   final Set<NutritionPreset> nutritionPresets;
+  final bool showPublicRecipes;
 
   int get activeFilterCount =>
       activeTags.length +
@@ -101,7 +104,8 @@ class RecipeFilter {
       (maxTotalMinutes != null ? 1 : 0) +
       (favoritesOnly ? 1 : 0) +
       (minRating != null ? 1 : 0) +
-      nutritionPresets.length;
+      nutritionPresets.length +
+      (!showPublicRecipes ? 1 : 0);
 
   static const _sentinel = Object();
 
@@ -114,6 +118,7 @@ class RecipeFilter {
     Object? minRating = _sentinel,
     Object? activeCategory = _sentinel,
     Set<NutritionPreset>? nutritionPresets,
+    bool? showPublicRecipes,
   }) {
     return RecipeFilter(
       query: query ?? this.query,
@@ -130,6 +135,7 @@ class RecipeFilter {
           ? this.activeCategory
           : activeCategory as String?,
       nutritionPresets: nutritionPresets ?? this.nutritionPresets,
+      showPublicRecipes: showPublicRecipes ?? this.showPublicRecipes,
     );
   }
 }
@@ -188,22 +194,37 @@ class RecipeFilterNotifier extends _$RecipeFilterNotifier {
     state = state.copyWith(nutritionPresets: presets);
   }
 
+  void toggleShowPublicRecipes() =>
+      state = state.copyWith(showPublicRecipes: !state.showPublicRecipes);
+
   void clearAll() => state = const RecipeFilter();
 }
 
 @riverpod
 List<RecipeModel>? filteredRecipes(Ref ref) {
-  final ownAsync = ref.watch(recipeListProvider);
-  final publicAsync = ref.watch(publicRecipesProvider);
+  final isGodMode = ref.watch(isAdminProvider) && ref.watch(godModeProvider);
   final filter = ref.watch(recipeFilterProvider);
 
-  final own = ownAsync.value;
-  if (own == null && !ownAsync.hasError) return null;
+  final List<RecipeModel> combined;
 
-  final combined = <RecipeModel>[
-    ...(own ?? []),
-    ...(publicAsync.asData?.value ?? []),
-  ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  if (isGodMode) {
+    final allAsync = ref.watch(allRecipesAdminProvider);
+    final all = allAsync.value;
+    if (all == null && !allAsync.hasError) return null;
+    combined = [...(all ?? [])]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  } else {
+    final ownAsync = ref.watch(recipeListProvider);
+    final own = ownAsync.value;
+    if (own == null && !ownAsync.hasError) return null;
+    final publicRecipes = filter.showPublicRecipes
+        ? (ref.watch(publicRecipesProvider).asData?.value ?? <RecipeModel>[])
+        : <RecipeModel>[];
+    combined = <RecipeModel>[
+      ...(own ?? []),
+      ...publicRecipes,
+    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
 
   return combined.where((recipe) {
     final q = filter.query.toLowerCase();

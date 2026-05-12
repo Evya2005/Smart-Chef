@@ -122,7 +122,7 @@ class _SessionSetupScreenState extends ConsumerState<SessionSetupScreen> {
               ? 'התחל לבשל! (${_selectedIds.length})'
               : 'בחר לפחות 2 מתכונים',
         ),
-        backgroundColor: _selectedIds.length >= 2 ? null : Colors.grey,
+        backgroundColor: _selectedIds.length >= 2 ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );

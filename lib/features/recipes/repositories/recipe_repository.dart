@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -104,9 +105,11 @@ class RecipeRepository {
         updatedAt: now,
       );
       if (toSave.isPublic) {
+        final email = FirebaseAuth.instance.currentUser?.email;
+        final toPublish = toSave.copyWith(ownerEmail: email);
         final batch = _firestore.batch();
-        batch.set(_recipesRef(toSave.userId).doc(id), toSave.toFirestore());
-        batch.set(_publicRef.doc(id), toSave.toFirestore());
+        batch.set(_recipesRef(toSave.userId).doc(id), toPublish.toFirestore());
+        batch.set(_publicRef.doc(id), toPublish.toFirestore());
         await batch.commit();
       } else {
         await _recipesRef(toSave.userId).doc(id).set(toSave.toFirestore());
@@ -132,10 +135,12 @@ class RecipeRepository {
       );
 
       if (updated.isPublic) {
+        final email = FirebaseAuth.instance.currentUser?.email;
+        final toPublish = updated.copyWith(ownerEmail: email);
         final batch = _firestore.batch();
         batch.update(
-            _recipesRef(recipe.userId).doc(recipe.id), updated.toFirestore());
-        batch.set(_publicRef.doc(recipe.id), updated.toFirestore());
+            _recipesRef(recipe.userId).doc(recipe.id), toPublish.toFirestore());
+        batch.set(_publicRef.doc(recipe.id), toPublish.toFirestore());
         await batch.commit();
       } else {
         await _recipesRef(recipe.userId)
@@ -157,11 +162,15 @@ class RecipeRepository {
     try {
       if (isPublic) {
         final recipe = await fetchRecipe(uid, recipeId);
+        final email = FirebaseAuth.instance.currentUser?.email;
         final updated = recipe.copyWith(
-            isPublic: true, updatedAt: DateTime.now());
+            isPublic: true,
+            ownerEmail: email,
+            updatedAt: DateTime.now());
         final batch = _firestore.batch();
         batch.update(_recipesRef(uid).doc(recipeId), {
           'isPublic': true,
+          'ownerEmail': email,
           'updatedAt': Timestamp.fromDate(updated.updatedAt),
         });
         batch.set(_publicRef.doc(recipeId), updated.toFirestore());
@@ -226,6 +235,18 @@ class RecipeRepository {
     await _recipesRef(uid)
         .doc(recipeId)
         .update({'nutrition': nutrition.toJson()});
+  }
+
+  /// Queries ALL users' recipe subcollections via a Firestore collection-group read.
+  /// Only call this when the authenticated user is confirmed admin (enforced by Firestore rules).
+  /// No orderBy — sorting is handled in Dart by filteredRecipesProvider.
+  Stream<List<RecipeModel>> watchAllRecipesAdmin() {
+    return _firestore
+        .collectionGroup(FirestoreConstants.recipesCollection)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => RecipeModelFirestore.fromFirestore(doc))
+            .toList());
   }
 
   Future<void> deleteRecipe(String uid, String recipeId) async {

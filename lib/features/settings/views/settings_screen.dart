@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/ai_guard.dart';
-import '../../../features/auth/providers/auth_provider.dart';
+import '../../../features/auth/providers/admin_provider.dart';
 import '../../../features/auth/repositories/auth_repository.dart';
 import '../providers/user_settings_provider.dart';
 import '../repositories/user_settings_repository.dart';
@@ -18,8 +19,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(recipeCategorizerProvider);
     final nutritionStatus = ref.watch(nutritionRefreshProvider);
-    final email = ref.watch(authStateProvider).asData?.value?.email;
-    final isAdmin = email == 'evya2005@gmail.com';
+    final isAdmin = ref.watch(isAdminProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('הגדרות')),
@@ -93,6 +93,13 @@ class SettingsScreen extends ConsumerWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/settings/categories'),
             ),
+            SwitchListTile(
+              secondary: const Icon(Icons.admin_panel_settings),
+              title: const Text('God Mode'),
+              subtitle: const Text('הצג את כל המתכונים של כל המשתמשים'),
+              value: ref.watch(godModeProvider),
+              onChanged: (_) => ref.read(godModeProvider.notifier).toggle(),
+            ),
             const Divider(),
           ],
         ],
@@ -121,7 +128,7 @@ class _ApiKeyTileState extends ConsumerState<_ApiKeyTile> {
           leading: Icon(
             hasKey ? Icons.check_circle : Icons.warning_amber_rounded,
             color: hasKey
-                ? Colors.green
+                ? AppColors.sage
                 : Theme.of(context).colorScheme.error,
           ),
           title: Text(hasKey ? 'מפתח מוגדר' : 'לא הוגדר מפתח'),
@@ -139,6 +146,9 @@ class _ApiKeyTileState extends ConsumerState<_ApiKeyTile> {
                   child: const Text('הסר'),
                 ),
               FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 36),
+                ),
                 onPressed: () => _showSetKeyDialog(context, currentKey),
                 child: Text(hasKey ? 'החלף' : 'הגדר מפתח'),
               ),
@@ -359,7 +369,7 @@ class _ApifyKeyTileState extends ConsumerState<_ApifyKeyTile> {
           leading: Icon(
             hasKey ? Icons.check_circle : Icons.info_outline,
             color: hasKey
-                ? Colors.green
+                ? AppColors.sage
                 : Theme.of(context).colorScheme.secondary,
           ),
           title: Text(hasKey ? 'מפתח מוגדר' : 'לא הוגדר מפתח'),
@@ -377,6 +387,9 @@ class _ApifyKeyTileState extends ConsumerState<_ApifyKeyTile> {
                   child: const Text('הסר'),
                 ),
               FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 36),
+                ),
                 onPressed: () => _showSetKeyDialog(context, currentKey),
                 child: Text(hasKey ? 'החלף' : 'הגדר מפתח'),
               ),
@@ -519,6 +532,7 @@ class _CategorizerTrailing extends StatelessWidget {
       case CategorizerStatus.idle:
       case CategorizerStatus.done:
         return FilledButton.tonal(
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
           onPressed: () => _run(context),
           child: const Text('הפעל'),
         );
@@ -569,6 +583,7 @@ class _NutritionRefreshTrailing extends StatelessWidget {
       case NutritionRefreshStatus.idle:
       case NutritionRefreshStatus.done:
         return FilledButton.tonal(
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
           onPressed: () => _run(context),
           child: const Text('הפעל'),
         );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../settings/providers/categories_provider.dart';
 import '../../providers/recipe_filter_provider.dart';
 
@@ -14,48 +16,35 @@ class CategoryChipBar extends ConsumerWidget {
         ref.watch(recipeFilterProvider.select((f) => f.activeCategory));
     final notifier = ref.read(recipeFilterProvider.notifier);
 
-    final presentCategories = ref.watch(recipeCategoriesProvider).asData?.value
-        ?? AppConstants.kRecipeCategories;
-
-    final colorScheme = Theme.of(context).colorScheme;
+    final presentCategories =
+        ref.watch(recipeCategoriesProvider).asData?.value ??
+            AppConstants.kRecipeCategories;
 
     return SizedBox(
-      height: 48,
+      height: 52,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          _Chip(
+          _SCChip(
             label: 'מועדפים',
-            icon: activeCategory == 'מועדפים'
-                ? Icons.favorite
-                : Icons.favorite_border,
-            iconColor:
-                activeCategory == 'מועדפים' ? Colors.red : null,
+            leadingIcon: Icons.favorite,
             selected: activeCategory == 'מועדפים',
-            selectedColor: colorScheme.primaryContainer,
             onTap: () => notifier.setCategory('מועדפים'),
           ),
           const SizedBox(width: 8),
-          _Chip(
+          _SCChip(
             label: 'מומלצים',
-            icon: activeCategory == 'מומלצים'
-                ? Icons.star
-                : Icons.star_border,
-            iconColor:
-                activeCategory == 'מומלצים' ? Colors.amber : null,
+            leadingIcon: Icons.star,
             selected: activeCategory == 'מומלצים',
-            selectedColor: colorScheme.primaryContainer,
             onTap: () => notifier.setCategory('מומלצים'),
           ),
           ...presentCategories.map((cat) {
-            final selected = activeCategory == cat;
             return Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: _Chip(
+              padding: const EdgeInsets.only(right: 8),
+              child: _SCChip(
                 label: cat,
-                selected: selected,
-                selectedColor: colorScheme.primaryContainer,
+                selected: activeCategory == cat,
                 onTap: () => notifier.setCategory(cat),
               ),
             );
@@ -66,33 +55,55 @@ class CategoryChipBar extends ConsumerWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({
+class _SCChip extends StatelessWidget {
+  const _SCChip({
     required this.label,
     required this.selected,
-    required this.selectedColor,
     required this.onTap,
-    this.icon,
-    this.iconColor,
+    this.leadingIcon,
   });
 
   final String label;
   final bool selected;
-  final Color selectedColor;
   final VoidCallback onTap;
-  final IconData? icon;
-  final Color? iconColor;
+  final IconData? leadingIcon;
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
-      avatar: icon != null
-          ? Icon(icon, size: 16, color: iconColor)
-          : null,
-      label: Text(label),
-      selected: selected,
-      selectedColor: selectedColor,
-      onSelected: (_) => onTap(),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.terracotta : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          border: selected
+              ? null
+              : Border.all(color: AppColors.lineStrong),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (leadingIcon != null) ...[
+              Icon(
+                leadingIcon,
+                size: 14,
+                color: selected ? Colors.white : AppColors.ink2,
+              ),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.assistant(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? Colors.white : AppColors.ink2,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

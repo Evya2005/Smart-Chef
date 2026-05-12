@@ -152,6 +152,10 @@ class _ActiveSessionCard extends StatelessWidget {
           style: TextStyle(color: cs.onPrimaryContainer.withAlpha(180)),
         ),
         trailing: FilledButton(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+          ),
           onPressed: () =>
               context.push('/planner/session/${session.id}'),
           child: const Text('המשך'),

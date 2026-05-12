@@ -26,7 +26,7 @@ class NudgeBanner extends StatelessWidget {
         NudgeType.timerExpired => cs.error,
         NudgeType.passiveWindow => cs.primary,
         NudgeType.allPassive => cs.tertiary,
-        NudgeType.recipeComplete => Colors.green,
+        NudgeType.recipeComplete => cs.secondary,
       };
 
   @override

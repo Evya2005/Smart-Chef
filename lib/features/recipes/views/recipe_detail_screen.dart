@@ -6,10 +6,13 @@ import 'package:gap/gap.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/ai_guard.dart';
 import '../../../shared/widgets/error_card.dart';
 import '../../../shared/widgets/tag_chip.dart';
 import '../../../features/auth/repositories/auth_repository.dart';
+import '../../../features/auth/providers/admin_provider.dart';
+import '../../../features/settings/providers/user_settings_provider.dart';
 import '../providers/cook_mode_provider.dart';
 import '../providers/recipe_detail_provider.dart';
 import '../providers/scaling_provider.dart';
@@ -24,9 +27,16 @@ import 'widgets/shopping_list_bottom_sheet.dart';
 import 'widgets/substitution_bottom_sheet.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
-  const RecipeDetailScreen({super.key, required this.recipeId});
+  const RecipeDetailScreen({
+    super.key,
+    required this.recipeId,
+    this.ownerUserId,
+  });
 
   final String recipeId;
+
+  /// When non-null the screen fetches via the admin provider (God Mode).
+  final String? ownerUserId;
 
   @override
   ConsumerState<RecipeDetailScreen> createState() =>
@@ -47,11 +57,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final recipeAsync = ref.watch(recipeDetailProvider(recipeId));
+    final ownerUserId = widget.ownerUserId;
+    final recipeAsync = ownerUserId != null
+        ? ref.watch(recipeDetailAdminProvider(recipeId, ownerUserId))
+        : ref.watch(recipeDetailProvider(recipeId));
     final scaledAsync = ref.watch(scaledIngredientsProvider(recipeId));
     final servingCount = ref.watch(servingCountProvider(recipeId));
     final currentUid =
         ref.read(authRepositoryProvider).currentUser?.uid;
+    final isGodMode = ref.watch(isAdminProvider) && ref.watch(godModeProvider);
 
     return recipeAsync.when(
       loading: () => const Scaffold(
@@ -67,6 +81,12 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
       ),
       data: (recipe) {
         final isOwner = recipe.userId == currentUid;
+        final rawOwnerEmail = recipe.ownerEmail ??
+            ref
+                .watch(ownerEmailProvider(recipe.userId))
+                .asData
+                ?.value;
+        final ownerName = rawOwnerEmail?.split('@')[0];
         final isCooking = ref.watch(cookModeActiveProvider);
         final cookState = ref.watch(cookModeProvider);
         final notifier = ref.read(cookModeProvider.notifier);
@@ -95,32 +115,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         }
 
         return Scaffold(
-          bottomNavigationBar: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: isCooking
-                ? FilledButton.icon(
-                    onPressed: exitCookMode,
-                    icon: const Icon(Icons.stop_circle_outlined),
-                    label: const Text('סיים בישול'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                    ),
-                  )
-                : FilledButton.icon(
-                    onPressed: () {
-                      notifier.init(recipe.steps);
-                      cookModeActiveNotifier.setActive(true);
-                    },
-                    icon: const Icon(Icons.restaurant_menu),
-                    label: const Text('התחל בישול'),
-                  ),
-          ),
           body: CustomScrollView(
             controller: _scrollController,
             slivers: [
               SliverAppBar(
-                expandedHeight:
-                    (!isCooking && recipe.imageUrl != null) ? 240 : 0,
+                expandedHeight: isCooking ? 0 : 240,
                 pinned: true,
                 leading: isCooking
                     ? IconButton(
@@ -128,9 +127,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                         onPressed: exitCookMode,
                       )
                     : null,
-                title: (isCooking || recipe.imageUrl == null)
-                    ? Text(recipe.title)
-                    : null,
+                title: isCooking ? Text(recipe.title) : null,
                 actions: isCooking
                     ? null
                     : isOwner
@@ -139,7 +136,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                               icon: Icon(recipe.isFavorite
                                   ? Icons.favorite
                                   : Icons.favorite_border),
-                              color: recipe.isFavorite ? Colors.red : null,
+                              color: recipe.isFavorite ? AppColors.terracotta : null,
                               tooltip: recipe.isFavorite
                                   ? 'הסר ממועדפים'
                                   : 'הוסף למועדפים',
@@ -259,11 +256,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                   child: Row(
                                     children: [
                                       Icon(Icons.delete_outline,
-                                          color: Colors.red),
+                                          color: AppColors.error),
                                       Gap(8),
                                       Text('מחיקה',
                                           style: TextStyle(
-                                              color: Colors.red)),
+                                              color: AppColors.error)),
                                     ],
                                   ),
                                 ),
@@ -298,47 +295,79 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                             value: progressValue),
                       )
                     : null,
-                flexibleSpace: (!isCooking && recipe.imageUrl != null)
-                    ? FlexibleSpaceBar(
-                        title: Text(
-                          recipe.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(
-                                  blurRadius: 4, color: Colors.black87),
-                            ],
-                          ),
-                        ),
-                        titlePadding: const EdgeInsetsDirectional.only(
-                            start: 16, end: 72, bottom: 14),
-                        background: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.network(
-                              recipe.imageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) =>
-                                  const SizedBox.shrink(),
+                flexibleSpace: isCooking
+                    ? null
+                    : recipe.imageUrl != null
+                        ? FlexibleSpaceBar(
+                            title: Text(
+                              recipe.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                      blurRadius: 10,
+                                      color: Colors.black87),
+                                  Shadow(
+                                      blurRadius: 3,
+                                      color: Colors.black,
+                                      offset: Offset(0, 1)),
+                                ],
+                              ),
                             ),
-                            const DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black54,
-                                  ],
-                                  stops: [0.5, 1.0],
+                            titlePadding: const EdgeInsetsDirectional.only(
+                                start: 16, end: 72, bottom: 14),
+                            background: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(
+                                  recipe.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      const SizedBox.shrink(),
+                                ),
+                                DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.65),
+                                      ],
+                                      stops: const [0.35, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : FlexibleSpaceBar(
+                            title: Text(
+                              recipe.title,
+                              style: TextStyle(
+                                color: AppColors.ink,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                shadows: const [],
+                              ),
+                            ),
+                            titlePadding: const EdgeInsetsDirectional.only(
+                                start: 16, end: 72, bottom: 14),
+                            background: Container(
+                              color: AppColors.sand,
+                              child: Center(
+                                child: Image.asset(
+                                  'assets/images/logo.png',
+                                  width: 100,
+                                  height: 100,
+                                  color: AppColors.terracotta
+                                      .withOpacity(0.60),
+                                  colorBlendMode: BlendMode.srcIn,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      )
-                    : null,
+                          ),
               ),
               SliverPadding(
                 padding: const EdgeInsets.all(16),
@@ -351,29 +380,45 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                               horizontal: 12, vertical: 6),
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer,
+                            color: isGodMode
+                                ? Colors.deepOrange.shade100
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.public,
-                                  size: 16,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSecondaryContainer),
+                              Icon(
+                                isGodMode
+                                    ? Icons.admin_panel_settings
+                                    : Icons.public,
+                                size: 16,
+                                color: isGodMode
+                                    ? Colors.deepOrange.shade800
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
+                              ),
                               const Gap(8),
-                              Text(
-                                'מתכון משותף — צור עותק כדי לערוך',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                    ),
+                              Expanded(
+                                child: Text(
+                                  isGodMode
+                                      ? 'God Mode — מתכון של ${ownerName ?? '...'}'
+                                      : ownerName != null
+                                          ? 'מאת: $ownerName — צור עותק כדי לערוך'
+                                          : 'מתכון משותף — צור עותק כדי לערוך',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: isGodMode
+                                            ? Colors.deepOrange.shade800
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onSecondaryContainer,
+                                      ),
+                                ),
                               ),
                             ],
                           ),
@@ -442,7 +487,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                                         ? Icons.star
                                         : Icons.star_border,
                                     size: 28,
-                                    color: Colors.amber,
+                                    color: AppColors.starGold,
                                   ),
                                 ),
                               );
@@ -549,6 +594,28 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                     else
                       ...recipe.steps.map((s) => StepTile(step: s)),
                     const Gap(32),
+                    isCooking
+                        ? FilledButton.icon(
+                            onPressed: exitCookMode,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('סיים בישול'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: colorScheme.error,
+                              minimumSize: const Size(double.infinity, 52),
+                            ),
+                          )
+                        : FilledButton.icon(
+                            onPressed: () {
+                              notifier.init(recipe.steps);
+                              cookModeActiveNotifier.setActive(true);
+                            },
+                            icon: const Icon(Icons.restaurant_menu),
+                            label: const Text('התחל בישול'),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 52),
+                            ),
+                          ),
+                    const Gap(16),
                   ]),
                 ),
               ),
@@ -587,7 +654,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             child: const Text('ביטול'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('מחיקה'),
           ),

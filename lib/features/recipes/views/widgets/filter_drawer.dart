@@ -82,6 +82,16 @@ class _FilterDrawerState extends State<FilterDrawer> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  // Public recipes toggle
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('הצג מתכוני משתמשים אחרים'),
+                    secondary: const Icon(Icons.people_outline, size: 20),
+                    value: filter.showPublicRecipes,
+                    onChanged: (_) => notifier.toggleShowPublicRecipes(),
+                  ),
+                  const Divider(height: 1),
+                  const Gap(16),
                   // Favorites + rating chips
                   Wrap(
                     spacing: 8,
@@ -93,16 +103,26 @@ class _FilterDrawerState extends State<FilterDrawer> {
                               ? Icons.favorite
                               : Icons.favorite_border,
                           size: 16,
-                          color: filter.favoritesOnly ? Colors.red : null,
+                          color: filter.favoritesOnly ? Colors.white : null,
                         ),
-                        label: const Text('מועדפים'),
+                        label: Text(
+                          'מועדפים',
+                          style: TextStyle(
+                            color: filter.favoritesOnly ? Colors.white : null,
+                          ),
+                        ),
                         selected: filter.favoritesOnly,
                         onSelected: (_) => notifier.toggleFavoritesOnly(),
                       ),
                       ...[1, 2, 3, 4].map((n) {
                         final isSelected = filter.minRating == n;
                         return ChoiceChip(
-                          label: Text('★$n+'),
+                          label: Text(
+                            '★$n+',
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : null,
+                            ),
+                          ),
                           selected: isSelected,
                           onSelected: (_) =>
                               notifier.setMinRating(isSelected ? null : n),
@@ -167,7 +187,12 @@ class _FilterDrawerState extends State<FilterDrawer> {
                     children: _timeOptions.map((opt) {
                       final isSelected = filter.maxTotalMinutes == opt.value;
                       return ChoiceChip(
-                        label: Text(opt.label),
+                        label: Text(
+                          opt.label,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : null,
+                          ),
+                        ),
                         selected: isSelected,
                         onSelected: (_) => notifier.setMaxTime(opt.value),
                       );
@@ -186,7 +211,12 @@ class _FilterDrawerState extends State<FilterDrawer> {
                     children: kAllTags.map((tag) {
                       final isActive = filter.activeTags.contains(tag);
                       return FilterChip(
-                        label: Text(tagLabel(tag)),
+                        label: Text(
+                          tagLabel(tag),
+                          style: TextStyle(
+                            color: isActive ? Colors.white : null,
+                          ),
+                        ),
                         selected: isActive,
                         onSelected: (_) => notifier.toggleTag(tag),
                       );
@@ -206,7 +236,12 @@ class _FilterDrawerState extends State<FilterDrawer> {
                       final isActive =
                           filter.nutritionPresets.contains(preset);
                       return FilterChip(
-                        label: Text(nutritionPresetLabel(preset)),
+                        label: Text(
+                          nutritionPresetLabel(preset),
+                          style: TextStyle(
+                            color: isActive ? Colors.white : null,
+                          ),
+                        ),
                         selected: isActive,
                         onSelected: (_) =>
                             notifier.toggleNutritionPreset(preset),

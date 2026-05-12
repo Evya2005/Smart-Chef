@@ -120,6 +120,15 @@ Return JSON matching this schema exactly:
     return recipe.copyWith(sourceUrl: url, sourceType: 'url');
   }
 
+  Future<RecipeModel> generateFromIngredients(
+      List<String> ingredients) async {
+    final list = ingredients.join(', ');
+    final prompt =
+        'צור מתכון מקורי ומעשי שמשתמש ברכיבים הבאים: $list\n'
+        'אתה רשאי להוסיף תבלינים בסיסיים, שמן, מלח ופלפל לפי הצורך.';
+    return _callGemini(prompt);
+  }
+
   /// Generates a food photo for the recipe using Imagen 3 Fast.
   /// Returns null on any failure (non-fatal).
   Future<Uint8List?> generateRecipeImage(

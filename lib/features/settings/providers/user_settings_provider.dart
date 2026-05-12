@@ -46,3 +46,9 @@ Stream<String?> apifyApiKey(Ref ref) {
 @riverpod
 bool hasApifyApiKey(Ref ref) =>
     (ref.watch(apifyApiKeyProvider).asData?.value ?? '').isNotEmpty;
+
+/// Fetches the email of any user from user_profiles (publicly readable).
+/// Returns null if the user hasn't logged in since this feature was added.
+@riverpod
+Future<String?> ownerEmail(Ref ref, String userId) =>
+    ref.watch(userSettingsRepositoryProvider).fetchOwnerEmail(userId);

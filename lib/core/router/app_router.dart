@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/auth/providers/admin_provider.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../services/share_intent_service.dart';
 import 'main_shell.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/discovery/views/discovery_basket_screen.dart';
+import '../../features/ingestion/views/generate_recipe_screen.dart';
 import '../../features/ingestion/views/ingestion_screen.dart';
 import '../../features/planner/views/planner_home_screen.dart';
 import '../../features/planner/views/session_setup_screen.dart';
@@ -52,6 +54,12 @@ GoRouter appRouter(Ref ref) {
           state.matchedLocation != '/ingest') {
         return '/ingest';
       }
+      // Admin-only route guard — redirect non-admins away.
+      const adminRoutes = {'/settings/categories'};
+      if (adminRoutes.contains(state.matchedLocation)) {
+        if (!ref.read(isAdminProvider)) return '/settings';
+      }
+
       return null;
     },
     refreshListenable: Listenable.merge([authRefresh, shareRefresh]),
@@ -69,8 +77,10 @@ GoRouter appRouter(Ref ref) {
             routes: [
               GoRoute(
                 path: ':id',
-                builder: (context, state) =>
-                    RecipeDetailScreen(recipeId: state.pathParameters['id']!),
+                builder: (context, state) => RecipeDetailScreen(
+                  recipeId: state.pathParameters['id']!,
+                  ownerUserId: state.uri.queryParameters['owner'],
+                ),
                 routes: [
                   GoRoute(
                     path: 'edit',
@@ -111,6 +121,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/ingest',
         builder: (context, state) => const IngestionScreen(),
+      ),
+      GoRoute(
+        path: '/generate-recipe',
+        builder: (_, _) => const GenerateRecipeScreen(),
       ),
       GoRoute(
         path: '/discover',

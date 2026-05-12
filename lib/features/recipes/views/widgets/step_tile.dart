@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../shared/models/cook_step_model.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,27 +12,26 @@ class StepTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Step number circle — sage palette
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.sageSoft,
               shape: BoxShape.circle,
             ),
             child: Text(
               '${step.stepNumber}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+              style: GoogleFonts.sourceSerif4(
+                color: AppColors.sage,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
           ),
@@ -40,9 +40,16 @@ class StepTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(step.instruction, style: textTheme.bodyMedium),
+                Text(
+                  step.instruction,
+                  style: GoogleFonts.assistant(
+                    fontSize: 14,
+                    color: AppColors.ink,
+                    height: 1.55,
+                  ),
+                ),
                 if (step.timerSeconds != null) ...[
-                  const Gap(4),
+                  const Gap(6),
                   _TimerBadge(
                     seconds: step.timerSeconds!,
                     label: step.timerLabel,
@@ -66,29 +73,30 @@ class _TimerBadge extends StatelessWidget {
   String _format(int s) {
     final m = s ~/ 60;
     final rem = s % 60;
-    if (m > 0 && rem > 0) return '$m min $rem sec';
-    if (m > 0) return '$m min';
-    return '$s sec';
+    if (m > 0 && rem > 0) return '$m דק׳ $rem שנ׳';
+    if (m > 0) return '$m דק׳';
+    return '$s שנ׳';
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.secondary.withAlpha(30),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.secondary),
+        color: AppColors.terracottaSoft,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.terracotta.withAlpha(60)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer, size: 14, color: AppColors.secondary),
-          const Gap(4),
+          const Icon(Icons.timer_outlined,
+              size: 14, color: AppColors.terracotta),
+          const Gap(5),
           Text(
             label ?? _format(seconds),
-            style: const TextStyle(
-              color: AppColors.secondary,
+            style: GoogleFonts.assistant(
+              color: AppColors.terracotta,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),

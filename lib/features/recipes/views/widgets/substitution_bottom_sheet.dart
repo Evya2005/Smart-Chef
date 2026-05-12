@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/models/ingredient_model.dart';
 import '../../../../shared/models/unit_type.dart';
 import '../../models/recipe_model.dart';
@@ -26,6 +27,10 @@ class SubstitutionBottomSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => SubstitutionBottomSheet(
         recipe: recipe,
         ingredient: ingredient,
@@ -60,7 +65,6 @@ class _SubstitutionBottomSheetState
           SnackBar(
             content: Text(
                 'המצרך "${widget.ingredient.name}" הוחלף בהצלחה!'),
-            backgroundColor: Colors.green,
           ),
         );
       } else if (next is SubstitutionError) {
@@ -197,7 +201,7 @@ class _CategoryFilterChips extends StatelessWidget {
   final String? activeCategory;
   final ValueChanged<String?> onCategoryChanged;
 
-  static const _categories = ['בריא', 'טבעוני', 'אין לי את זה'];
+  static const _categories = ['אין לי את זה'];
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +210,12 @@ class _CategoryFilterChips extends StatelessWidget {
       child: Row(
         children: [
           FilterChip(
-            label: const Text('הכל'),
+            label: Text(
+              'הכל',
+              style: TextStyle(
+                color: activeCategory == null ? Colors.white : null,
+              ),
+            ),
             selected: activeCategory == null,
             onSelected: (_) => onCategoryChanged(null),
           ),
@@ -215,7 +224,12 @@ class _CategoryFilterChips extends StatelessWidget {
             (cat) => Padding(
               padding: const EdgeInsets.only(right: 6),
               child: FilterChip(
-                label: Text(cat),
+                label: Text(
+                  cat,
+                  style: TextStyle(
+                    color: activeCategory == cat ? Colors.white : null,
+                  ),
+                ),
                 selected: activeCategory == cat,
                 onSelected: (_) => onCategoryChanged(
                   activeCategory == cat ? null : cat,
@@ -246,15 +260,13 @@ class _SubstitutionCardState extends State<_SubstitutionCard> {
   bool _expanded = false;
 
   static const _categoryColors = {
-    'בריא': Color(0xFF4CAF50),
-    'טבעוני': Color(0xFF8BC34A),
-    'אין לי את זה': Color(0xFF2196F3),
+    'אין לי את זה': AppColors.terracotta,
   };
 
   @override
   Widget build(BuildContext context) {
     final sub = widget.substitution;
-    final color = _categoryColors[sub.category] ?? Colors.grey;
+    final color = _categoryColors[sub.category] ?? AppColors.ink3;
     final unit = sub.unit == UnitType.none ? '' : ' ${sub.unit.displayLabel}';
     final qty = _formatQty(sub.quantity);
 
@@ -295,6 +307,17 @@ class _SubstitutionCardState extends State<_SubstitutionCard> {
                 ),
                 FilledButton(
                   onPressed: widget.onApply,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(56, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   child: const Text('החל'),
                 ),
               ],

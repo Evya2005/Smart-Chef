@@ -13,6 +13,7 @@ abstract class RecipeModel with _$RecipeModel {
   const factory RecipeModel({
     required String id,
     required String userId,
+    String? ownerEmail,
     required String title,
     String? description,
     String? notes,

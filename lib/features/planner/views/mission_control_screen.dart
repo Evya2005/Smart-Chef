@@ -694,6 +694,8 @@ class _SessionStepTileState extends ConsumerState<_SessionStepTile> {
                     FilledButton.icon(
                       style: FilledButton.styleFrom(
                         backgroundColor: widget.color,
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                       ),
                       icon: const Icon(Icons.check, size: 16),
                       label: const Text('סיימתי'),
